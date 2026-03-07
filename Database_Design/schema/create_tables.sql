@@ -45,6 +45,12 @@ CREATE TABLE vod (
 
     -- 제작진 (NULL 허용: RAG 파이프라인 보강 예정)
     director            VARCHAR(255),                   -- 313건 누락
+    cast_lead           TEXT,                           -- 주연배우 JSON 배열. RAG 보강 예정
+    cast_guest          TEXT,                           -- 조연배우 JSON 배열. RAG 보강 예정
+
+    -- 분류/시간 정보 (NULL 허용: RAG 파이프라인 보강 예정)
+    rating              VARCHAR(16),                    -- 연령등급 (전체이용가, 12세이상 등). RAG 보강 예정
+    release_date        DATE,                           -- 개봉일. RAG 보강 예정
 
     -- 설명 (NULL 허용: RAG 파이프라인 보강 예정)
     smry                TEXT,                           -- 28건 누락
