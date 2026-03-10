@@ -28,13 +28,21 @@ DB_CONFIG = {
 KOREAN_CT_CL = {"TV드라마", "예능", "키즈", "애니", "시사/교양", "스포츠"}
 KIDS_CT_CL = {"키즈"}
 KIDS_DEFAULT_RATING = "전체이용가"
-EPISODE_PATTERN = re.compile(r'\s*((시즌\d+|[A-Za-z]+)\s+)?\d+회\s*$')
+EPISODE_PATTERN = re.compile(
+    r'\s*((시즌\s*\d+|[Ss]eason\s*\d+|[A-Za-z]+)\s+)?'
+    r'\d+\s*(회|화|강|편|부)?'
+    r'[\.\s]*$',
+    re.IGNORECASE
+)
 
 SAMPLE_PER_CT_CL = 10  # ct_cl당 샘플 수
 
 
 def normalize_title(title: str) -> str:
-    return EPISODE_PATTERN.sub('', title).strip()
+    result = EPISODE_PATTERN.sub('', title)
+    result = re.sub(r'[\.\~\s]+$', '', result)
+    result = re.sub(r'\s+', ' ', result)
+    return result.strip()
 
 
 def get_stratified_sample(conn) -> list[dict]:

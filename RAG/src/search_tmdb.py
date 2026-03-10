@@ -50,7 +50,6 @@ def search_tmdb(title: str, year: str = None, content_type: str = "movie") -> di
 def _get_tmdb_details(item_id: int, content_type: str) -> dict | None:
     """TMDB ID로 상세 정보 + 크레딧 조회"""
     try:
-        # 상세 정보
         detail_url = f"{TMDB_BASE_URL}/{content_type}/{item_id}"
         credit_url = f"{TMDB_BASE_URL}/{content_type}/{item_id}/credits"
         params = {"api_key": TMDB_API_KEY, "language": "ko-KR"}
@@ -67,14 +66,25 @@ def _get_tmdb_details(item_id: int, content_type: str) -> dict | None:
         detail = detail_resp.json()
         credits = credit_resp.json()
 
-        return _parse_tmdb_result(detail, credits, content_type)
+        # TV는 content_ratings 별도 조회
+        tv_rating = None
+        if content_type == "tv":
+            rating_url = f"{TMDB_BASE_URL}/tv/{item_id}/content_ratings"
+            rating_resp = requests.get(rating_url, params={"api_key": TMDB_API_KEY}, timeout=3)
+            if rating_resp.ok:
+                for r in rating_resp.json().get("results", []):
+                    if r.get("iso_3166_1") == "KR":
+                        tv_rating = r.get("rating") or None
+                        break
+
+        return _parse_tmdb_result(detail, credits, content_type, tv_rating)
 
     except Exception as e:
         print(f"[TMDB] 상세 조회 오류 (id={item_id}): {e}")
         return None
 
 
-def _parse_tmdb_result(detail: dict, credits: dict, content_type: str) -> dict:
+def _parse_tmdb_result(detail: dict, credits: dict, content_type: str, tv_rating: str = None) -> dict:
     """TMDB 응답에서 필요한 필드 추출"""
     # 감독 (영화: crew의 Director / TV: created_by 또는 crew의 Director)
     crew = credits.get("crew", [])
@@ -89,15 +99,18 @@ def _parse_tmdb_result(detail: dict, credits: dict, content_type: str) -> dict:
     cast_lead = [a["name"] for a in cast[:5]] if cast else None
     cast_guest = [a["name"] for a in cast[5:15]] if len(cast) > 5 else None
 
-    # 관람등급 (append_to_response=release_dates 로 가져온 데이터)
+    # 관람등급 (영화: release_dates / TV: content_ratings)
     rating = None
-    release_dates = detail.get("release_dates", {}).get("results", [])
-    for r in release_dates:
-        if r.get("iso_3166_1") == "KR":
-            certs = r.get("release_dates", [])
-            if certs:
-                rating = certs[0].get("certification") or None
-            break
+    if content_type == "tv":
+        rating = tv_rating
+    else:
+        release_dates = detail.get("release_dates", {}).get("results", [])
+        for r in release_dates:
+            if r.get("iso_3166_1") == "KR":
+                certs = r.get("release_dates", [])
+                if certs:
+                    rating = certs[0].get("certification") or None
+                break
 
     # 개봉일
     if content_type == "movie":
