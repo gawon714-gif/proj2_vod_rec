@@ -77,6 +77,32 @@ created_at, updated_at  TIMESTAMPTZ
 
 ---
 
+## 개발 방식 — TDD (Test Driven Development)
+
+**모든 기능은 TDD 사이클로 개발:**
+```
+1. Red      → 실패하는 테스트 먼저 작성
+2. Green    → 테스트를 통과하는 최소한의 코드 작성
+3. Refactor → 코드 정리 (테스트는 계속 통과해야 함)
+```
+
+- 구현 코드 작성 전 반드시 테스트 파일에 실패 케이스 먼저 작성
+- 테스트 없이 구현 코드만 작성하지 말 것
+- 각 Phase 완료 시 `report-agent`로 진행상황 보고서 작성
+
+---
+
+## Agent 사용 규칙
+
+| Agent | 역할 | 실행 시점 |
+|-------|------|----------|
+| `tdd-agent` | TDD 사이클 관리 | 새 기능 개발 시작 시 |
+| `report-agent` | 진행상황 보고서 작성 | Phase 완료 시, 주요 기능 구현 시 |
+
+- 보고서 저장 위치: `user_embedding/reports/YYYY-MM-DD_{작업명}.md`
+
+---
+
 ## 파일 구조
 
 ```
@@ -91,13 +117,19 @@ user_embedding/
 ├── notebooks/
 │   └── (실험/검증용 Jupyter 노트북)
 ├── tests/
-│   └── similarity_search.py     # 유사도 검색 품질 검증
+│   ├── test_vod_embedding.py    # VOD 임베딩 테스트
+│   ├── test_user_embedding.py   # USER 임베딩 테스트
+│   ├── test_milvus_client.py    # Milvus 연결 테스트
+│   └── test_similarity.py       # 유사도 검색 테스트
 ├── config/
 │   └── .env                     # DB/Milvus 연결 정보
 ├── reports/
-│   └── YYYY-MM-DD_embedding.md  # 작업 레포트
+│   └── YYYY-MM-DD_{작업명}.md   # 진행상황 보고서
 └── .claude/
-    └── claude.md                # 이 파일
+    ├── claude.md                # 이 파일
+    └── agents/
+        ├── tdd-agent.md         # TDD 사이클 관리
+        └── report-agent.md      # 보고서 작성
 ```
 
 ---
